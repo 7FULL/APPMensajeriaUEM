@@ -23,7 +23,7 @@ public class UserServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        repo = new UserRepository();
+        repo = new UserRepository(new MongoDbClient());
         gson = new Gson();
     }
 

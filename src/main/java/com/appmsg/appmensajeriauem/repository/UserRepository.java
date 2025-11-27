@@ -1,21 +1,17 @@
 package com.appmsg.appmensajeriauem.repository;
 
+import com.appmsg.appmensajeriauem.MongoDbClient;
 import com.appmsg.appmensajeriauem.model.User;
-import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class UserRepository {
-    private MongoCollection<Document> collection;
+    private final MongoCollection<Document> collection;
 
-    public UserRepository() {
-        // Conexión a MongoDB
-        MongoClient client = new MongoClient("localhost", 27017);
-        MongoDatabase db = client.getDatabase("local");
-        this.collection = db.getCollection("User");
+    public UserRepository(MongoDbClient mongoClient) {
+        this.collection = mongoClient.getCollection("users");
     }
 
     public void createUser(User user) {
