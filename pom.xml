@@ -57,6 +57,11 @@
             <artifactId>gson</artifactId>
             <version>2.13.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.t3hnar</groupId>
+            <artifactId>scala-bcrypt_2.13</artifactId>
+            <version>4.3.0</version>
+        </dependency>
     </dependencies>
 
     <build>
