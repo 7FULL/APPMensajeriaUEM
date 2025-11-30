@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet(name = "chatServlet", value = "/api/chat")
@@ -33,24 +32,28 @@ public class ChatServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String chatId = req.getParameter("chatId");
-
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
+        String chatId = req.getParameter("chatId");
+
+        //Check that the chat id is not null ot empty
         if (chatId == null || chatId.isEmpty()) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Falta el parámetro chatId\"}");
+            resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: doGet, Error: The parameter chatId is null or empty\"}");
             return;
         }
 
         try {
-            ObjectId objectId = new ObjectId(chatId);
-            Chat chat = repo.enterConversation(objectId);
 
+            //Try to access the chat by its id
+            ObjectId objectId = new ObjectId(chatId);
+            Chat chat = repo.enterChat(objectId);
+
+            //check if the chat wasn't found
             if (chat == null) {
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                resp.getWriter().write("{\"error\":\"Chat no encontrado\"}");
+                resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: doGet, Error: The chat was not found\"}");
                 return;
             }
 
@@ -60,7 +63,7 @@ public class ChatServlet extends HttpServlet {
 
         } catch (IllegalArgumentException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"ID de chat inválido\"}");
+            resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: doGet, Error: The chatId was invalid\"}");
         }
     }
 
@@ -85,79 +88,94 @@ public class ChatServlet extends HttpServlet {
 
             if (action == null) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Falta el parámetro 'action'\"}");
+                resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: doPost, Error: Theparameter 'action' is missing\"}");
                 return;
             }
 
             switch (action) {
-                case "startPrivateConversation":
-                    handleStartPrivateConversation(json, resp);
+                case "createChat":
+                    handleCreateChat(json, resp);
                     break;
 
-                case "createGroup":
-                    handleCreateGroup(json, resp);
+                case "deleteChat":
+                    handleDeleteChat(json, resp);
                     break;
 
                 default:
                     resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    resp.getWriter().write("{\"error\":\"Acción no válida\"}");
+                    resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: doPost, Error: The value of 'action'{" + action + "} is invalid\"}");
             }
 
         } catch (JsonSyntaxException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"JSON inválido\"}");
+            resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: doPost, Error: Invalid JSON\"}");
         } catch (IllegalArgumentException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("{\"error\":\"Error interno del servidor\"}");
+            resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: doPost, Error: Internal server error\"}");
         }
     }
 
-    private void handleStartPrivateConversation(JsonObject json, HttpServletResponse resp)
+    private void handleCreateChat(JsonObject json, HttpServletResponse resp)
             throws IOException {
 
-        if (!json.has("user1Id") || !json.has("user2Id")) {
+        //Check that the required parameters are present at the JSON
+        if (!json.has("chatName")) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Faltan user1Id o user2Id\"}");
+            resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: handleCreateChat, Error: the parameter chatName is missing from the JSON and is required to create a chat\"}");
             return;
         }
 
-        String user1IdStr = json.get("user1Id").getAsString();
-        String user2IdStr = json.get("user2Id").getAsString();
+        if (!json.has("userList")) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: handleCreateChat, Error: the parameter userList is missing from the JSON and is required to create a chat\"}");
+            return;
+        }
 
-        ObjectId user1Id = new ObjectId(user1IdStr);
-        ObjectId user2Id = new ObjectId(user2IdStr);
+        if (!json.has("chatImage")) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: handleCreateChat, Error: the parameter chatImage is missing from the JSON and is required to create a chat\"}");
+            return;
+        }
 
-        Chat chat = repo.startPrivateConversation(user1Id, user2Id);
+        //Extract data from JSON to send to the repository
+        String chatName = json.has("chatName") ? json.get("chatName").getAsString() : null;
+        List<ObjectId> userList = json.has("userList") ? gson.fromJson(json.get("userList").toString(), List.class) : null;
+        String chatImage = json.has("chatImage") ? json.get("chatImage").getAsString() : null;
 
+        //Create the new chat
+        Chat chat = repo.createChat(chatName,userList,chatImage);
+
+        //Return the chat as JSON
         String responseJson = gson.toJson(chat);
+
+        //Set the status code to 201 Created
         resp.setStatus(HttpServletResponse.SC_CREATED);
+
+        //Write the JSON response
         resp.getWriter().write(responseJson);
     }
 
-    private void handleCreateGroup(JsonObject json, HttpServletResponse resp)
+    private void handleDeleteChat(JsonObject json, HttpServletResponse resp)
             throws IOException {
 
-        if (!json.has("groupName") || !json.has("userIds")) {
+        //Check that the required parameters are present at the JSON
+        if (!json.has("chatId")) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Faltan groupName o userIds\"}");
+            resp.getWriter().write("{\"error\":\"Class: ChatServlet, Method: handleCreateChat, Error: the parameter chatId is missing from the JSON and is required to create a chat\"}");
             return;
         }
 
-        String groupName = json.get("groupName").getAsString();
-        String groupImage = json.has("groupImage") ? json.get("groupImage").getAsString() : null;
+        //Extract data from JSON to send to the repository
+        String chatIdStr = json.has("chatId") ? json.get("chatId").getAsString() : null;
+        ObjectId chatId = new ObjectId(chatIdStr);
 
-        List<ObjectId> userIds = new ArrayList<>();
-        json.getAsJsonArray("userIds").forEach(element -> {
-            userIds.add(new ObjectId(element.getAsString()));
-        });
-
-        Chat group = repo.createGroup(groupName, userIds, groupImage);
-
-        String responseJson = gson.toJson(group);
-        resp.setStatus(HttpServletResponse.SC_CREATED);
-        resp.getWriter().write(responseJson);
+        //Delete the specified chat
+        if(repo.deleteChat(chatId)){
+            //Set the status code to 200 OK because the chat was deleted successfully
+            resp.setStatus(HttpServletResponse.SC_OK);
+        }
     }
 }

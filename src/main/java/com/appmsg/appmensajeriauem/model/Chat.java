@@ -9,14 +9,16 @@ public class Chat {
     private String _chatName;
     private List<ObjectId> _userList;
     private String _chatImage;
+    private Boolean _isGroup;
 
     public Chat() {}
 
-    public Chat(ObjectId id, String chatName, List<ObjectId> userList, String chatImage) {
+    public Chat(ObjectId id, String chatName, List<ObjectId> userList, String chatImage, Boolean isGroup) {
         this._id = id;
         this._chatName = chatName;
         this._userList = userList;
         this._chatImage = chatImage;
+        this._isGroup = isGroup;
     }
 
     public ObjectId getId() {
@@ -57,6 +59,12 @@ public class Chat {
 
     public void setChatImage(String chatImage) {
         this._chatImage = chatImage;
+    }
+    public Boolean getIsGroup() {
+        return _isGroup;
+    }
+    public void setIsGroup(Boolean isGroup) {
+        this._isGroup = isGroup;
     }
 
     @Override
