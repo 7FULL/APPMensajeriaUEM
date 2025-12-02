@@ -1,75 +1,112 @@
 package com.appmsg.appmensajeriauem;
 
 import com.appmsg.appmensajeriauem.model.UserSettings;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.appmsg.appmensajeriauem.repository.SettingsRepository;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import org.bson.types.ObjectId;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import java.io.BufferedReader;
 import java.io.IOException;
 
 @WebServlet(name = "settingsServlet", value = "/api/settings")
 public class SettingsServlet extends HttpServlet {
 
-    // ObjectMapper nos permite convertir objetos Java a JSON
-    private final ObjectMapper mapper = new ObjectMapper();
-
-    // Aquí guardamos los ajustes "actuales" en memoria
-    private UserSettings currentSettings;
+    private SettingsRepository repo;
+    private Gson gson;
 
     @Override
-    public void init() {
-        System.out.println("SettingsServlet inicializado.");
+    public void init() throws ServletException {
+        repo = new SettingsRepository(new MongoDbClient());
+        gson = new Gson();
     }
 
+    // GET /api/settings?userId=xxxxx
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
-        // Creamos un objeto UserSettings de prueba
-        UserSettings settings = new UserSettings();
-        settings.setUserId("demo-user");
-        settings.setDarkMode(true);
-        settings.setWallpaperPath(null);
-        settings.setDisplayName("Usuario Demo");
-        settings.setStatus("Disponible");
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
 
-        // Indicamos que la respuesta será JSON
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
+        String userIdParam = req.getParameter("userId");
 
-        // Convertimos el objeto a JSON y lo enviamos
-        mapper.writeValue(response.getWriter(), settings);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+        if (userIdParam == null || userIdParam.isEmpty()) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Falta el parámetro userId\"}");
+            return;
+        }
 
         try {
-            // Leemos el JSON del cuerpo y lo convertimos a UserSettings
-            UserSettings incoming = mapper.readValue(request.getInputStream(), UserSettings.class);
+            ObjectId userId = new ObjectId(userIdParam);
+            UserSettings settings = repo.getByUserId(userId);
 
-            // (más adelante vendrá del login o de un token)
-            incoming.setUserId("demo-user");
+            if (settings == null) {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.getWriter().write("{\"error\":\"Ajustes no encontrados\"}");
+                return;
+            }
 
-            // Guardamos en memoria como "ajustes actuales"
-            this.currentSettings = incoming;
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.getWriter().write(gson.toJson(settings));
 
-            // Devolvemos 204 No Content para indicar que se ha guardado correctamente
-            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-
-        } catch (Exception e) {
-            // Si el JSON viene mal formado o hay algún problema,
-            // devolvemos un 400 Bad Request
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "JSON inválido o datos incorrectos");
+        } catch (IllegalArgumentException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"ID inválido\"}");
         }
     }
 
+    // POST /api/settings  { userId, darkMode, wallpaperPath, displayName, status }
     @Override
-    public void destroy() {
-        System.out.println("SettingsServlet destruido.");
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+
+        StringBuilder sb = new StringBuilder();
+        BufferedReader reader = req.getReader();
+        String line;
+        while ((line = reader.readLine()) != null) sb.append(line);
+
+        try {
+            JsonObject json = gson.fromJson(sb.toString(), JsonObject.class);
+
+            if (!json.has("userId")) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\":\"Falta userId\"}");
+                return;
+            }
+
+            ObjectId userId = new ObjectId(json.get("userId").getAsString());
+
+            UserSettings existing = repo.getByUserId(userId);
+
+            UserSettings settings = existing != null ? existing : new UserSettings();
+            settings.setUserId(userId);
+            settings.setDarkMode(json.has("darkMode") && json.get("darkMode").getAsBoolean());
+            settings.setWallpaperPath(json.has("wallpaperPath") ? json.get("wallpaperPath").getAsString() : null);
+            settings.setDisplayName(json.has("displayName") ? json.get("displayName").getAsString() : null);
+            settings.setStatus(json.has("status") ? json.get("status").getAsString() : null);
+
+            repo.save(settings);
+
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.getWriter().write(gson.toJson(settings));
+
+        } catch (JsonSyntaxException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"JSON inválido\"}");
+        } catch (IllegalArgumentException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"ID inválido\"}");
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write("{\"error\":\"Error interno del servidor\"}");
+        }
     }
 }
-
