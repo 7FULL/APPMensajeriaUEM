@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Completo - APPMensajeriaUEM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            max-width: 1200px;
+        }
+        h1 { color: #333; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+        h2 { color: #667eea; margin-top: 30px; }
+        .section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+        input, textarea, select, button {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: auto;
+            padding: 10px 20px;
+        }
+        button:hover { background: #5568d3; }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .message { padding: 8px; margin: 5px 0; border-left: 3px solid #667eea; background: white; }
+        .message.received { border-left-color: #28a745; }
+        .message.sent { border-left-color: #007bff; }
+        label { display: inline-block; width: 150px; font-weight: bold; }
+        .inline { display: inline-block; margin-right: 10px; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Completo - APPMensajeriaUEM</h1>
+    <p><strong>Base URL:</strong> <code id="baseUrl">/APPMensajeriaUEM-1.0-SNAPSHOT</code></p>
+
+    <div class="section">
+        <h2>👤 1. Usuarios</h2>
+
+        <h3>Crear Usuario</h3>
+        <label>Email:</label><input type="text" id="userEmail" value="test@example.com"><br>
+        <label>Username:</label><input type="text" id="userUsername" value="testuser"><br>
+        <label>Password:</label><input type="password" id="userPassword" value="123456"><br>
+        <button onclick="createUser()">Crear Usuario</button>
+        <div id="userCreateResult" class="result"></div>
+
+        <h3>Ver Perfil</h3>
+        <label>Buscar por:</label>
+        <select id="profileSearchType" class="inline">
+            <option value="userId">User ID</option>
+            <option value="username">Username</option>
+            <option value="email">Email</option>
+        </select>
+        <input type="text" id="profileSearchValue" placeholder="Introduce valor" class="inline">
+        <button onclick="getProfile()">Ver Perfil</button>
+        <div id="profileResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>💬 2. Chats</h2>
+
+        <h3>Crear Chat Privado</h3>
+        <label>User 1 ID:</label><input type="text" id="chatUser1"><br>
+        <label>User 2 ID:</label><input type="text" id="chatUser2"><br>
+        <button onclick="createPrivateChat()">Crear Chat Privado</button>
+        <div id="privateChatResult" class="result"></div>
+
+        <h3>Crear Grupo</h3>
+        <label>Nombre:</label><input type="text" id="groupName" value="Grupo de Prueba"><br>
+        <label>User IDs (separados por coma):</label><input type="text" id="groupUsers" placeholder="id1,id2,id3"><br>
+        <button onclick="createGroup()">Crear Grupo</button>
+        <div id="groupResult" class="result"></div>
+
+        <h3>Obtener Chat</h3>
+        <label>Chat ID:</label><input type="text" id="getChatId" class="inline">
+        <button onclick="getChat()">Obtener Chat</button>
+        <div id="getChatResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>📝 3. Mensajes (REST)</h2>
+
+        <h3>Enviar Mensaje</h3>
+        <label>Chat ID:</label><input type="text" id="msgChatId"><br>
+        <label>Sender ID:</label><input type="text" id="msgSenderId"><br>
+        <label>Mensaje:</label><textarea id="msgContent" rows="3">Hola desde REST!</textarea><br>
+        <button onclick="sendMessageREST()">Enviar Mensaje</button>
+        <div id="sendMsgResult" class="result"></div>
+
+        <h3>Obtener Mensajes</h3>
+        <label>Chat ID:</label><input type="text" id="getMsgChatId" class="inline">
+        <label>Límite:</label><input type="number" id="getMsgLimit" value="10" class="inline" style="max-width: 100px;">
+        <button onclick="getMessages()">Obtener Mensajes</button>
+        <div id="getMsgResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔴 4. WebSocket (Tiempo Real)</h2>
+
+        <h3>Conectar WebSocket</h3>
+        <label>Chat ID:</label><input type="text" id="wsChatId"><br>
+        <label>User ID:</label><input type="text" id="wsUserId"><br>
+        <button onclick="connectWebSocket()">Conectar</button>
+        <button onclick="disconnectWebSocket()">Desconectar</button>
+        <span id="wsStatus" style="margin-left: 10px; font-weight: bold;">❌ Desconectado</span>
+
+        <h3>Enviar Mensaje WebSocket</h3>
+        <label>Mensaje:</label><input type="text" id="wsMessage" placeholder="Escribe un mensaje">
+        <button onclick="sendMessageWS()">Enviar por WS</button>
+
+        <h3>Mensajes en Tiempo Real</h3>
+        <div id="wsMessages" class="result" style="max-height: 400px;"></div>
+    </div>
+
+    <div class="section">
+        <h2>📁 5. Archivos Multimedia</h2>
+
+        <h3>Subir Archivos</h3>
+        <input type="file" id="fileInput" multiple>
+        <button onclick="uploadFiles()">Subir Archivos</button>
+        <div id="uploadResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔗 6. Enlaces de Invitación</h2>
+
+        <h3>Crear Enlace</h3>
+        <label>Chat ID:</label><input type="text" id="inviteChatId"><br>
+        <label>Creado por (User ID):</label><input type="text" id="inviteCreatedBy"><br>
+        <label>Expiración (horas):</label>
+        <select id="inviteExpiration">
+            <option value="">Sin expiración</option>
+            <option value="1">1 hora</option>
+            <option value="24">24 horas</option>
+            <option value="168">7 días</option>
+        </select><br>
+        <label>Máximo usos:</label>
+        <select id="inviteMaxUses">
+            <option value="">Ilimitado</option>
+            <option value="1">1 uso</option>
+            <option value="10">10 usos</option>
+            <option value="50">50 usos</option>
+        </select><br>
+        <button onclick="createInvite()">Crear Enlace</button>
+        <div id="inviteCreateResult" class="result"></div>
+
+        <h3>Verificar Enlace</h3>
+        <label>Código:</label><input type="text" id="inviteVerifyCode" class="inline">
+        <button onclick="verifyInvite()">Verificar</button>
+        <div id="inviteVerifyResult" class="result"></div>
+
+        <h3>Unirse por Enlace</h3>
+        <label>Código:</label><input type="text" id="inviteJoinCode" class="inline">
+        <label>User ID:</label><input type="text" id="inviteJoinUserId" class="inline">
+        <button onclick="joinViaInvite()">Unirse</button>
+        <div id="inviteJoinResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>⚙️ 7. Configuraciones de Usuario</h2>
+
+        <h3>Obtener Configuración</h3>
+        <label>User ID:</label><input type="text" id="settingsGetUserId" class="inline">
+        <button onclick="getSettings()">Obtener</button>
+        <div id="settingsGetResult" class="result"></div>
+
+        <h3>Guardar Configuración</h3>
+        <label>User ID:</label><input type="text" id="settingsSaveUserId"><br>
+        <label>Display Name:</label><input type="text" id="settingsDisplayName" value="Mi Nombre"><br>
+        <label>Dark Mode:</label>
+        <select id="settingsDarkMode">
+            <option value="false">No</option>
+            <option value="true">Sí</option>
+        </select><br>
+        <label>Status:</label><input type="text" id="settingsStatus" value="Disponible"><br>
+        <button onclick="saveSettings()">Guardar</button>
+        <div id="settingsSaveResult" class="result"></div>
+    </div>
+
+    <script>
+        const baseUrl = '/APPMensajeriaUEM_war_exploded';
+        let ws = null;
+
+        async function createUser() {
+            const email = document.getElementById('userEmail').value;
+            const username = document.getElementById('userUsername').value;
+            const password = document.getElementById('userPassword').value;
+
+            const result = await fetch(`${baseUrl}/api/user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, username, password })
+            });
+
+            const data = await result.json();
+            showResult('userCreateResult', data, result.ok);
+        }
+
+        async function getProfile() {
+            const type = document.getElementById('profileSearchType').value;
+            const value = document.getElementById('profileSearchValue').value;
+
+            const result = await fetch(`${baseUrl}/api/profile?${type}=${value}`);
+            const data = await result.json();
+            showResult('profileResult', data, result.ok);
+        }
+
+        async function createPrivateChat() {
+            const user1Id = document.getElementById('chatUser1').value;
+            const user2Id = document.getElementById('chatUser2').value;
+
+            const result = await fetch(`${baseUrl}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'startPrivateConversation',
+                    user1Id, user2Id
+                })
+            });
+
+            const data = await result.json();
+            showResult('privateChatResult', data, result.ok);
+        }
+
+        async function createGroup() {
+            const groupName = document.getElementById('groupName').value;
+            const userIds = document.getElementById('groupUsers').value.split(',').map(id => id.trim());
+
+            const result = await fetch(`${baseUrl}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'createGroup',
+                    groupName, userIds
+                })
+            });
+
+            const data = await result.json();
+            showResult('groupResult', data, result.ok);
+        }
+
+        async function getChat() {
+            const chatId = document.getElementById('getChatId').value;
+            const result = await fetch(`${baseUrl}/api/chat?chatId=${chatId}`);
+            const data = await result.json();
+            showResult('getChatResult', data, result.ok);
+        }
+
+        async function sendMessageREST() {
+            const chatId = document.getElementById('msgChatId').value;
+            const senderId = document.getElementById('msgSenderId').value;
+            const message = document.getElementById('msgContent').value;
+
+            const result = await fetch(`${baseUrl}/api/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chatId, senderId, message })
+            });
+
+            const data = await result.json();
+            showResult('sendMsgResult', data, result.ok);
+        }
+
+        async function getMessages() {
+            const chatId = document.getElementById('getMsgChatId').value;
+            const limit = document.getElementById('getMsgLimit').value;
+
+            const result = await fetch(`${baseUrl}/api/messages?chatId=${chatId}&limit=${limit}`);
+            const data = await result.json();
+            showResult('getMsgResult', data, result.ok);
+        }
+
+        function connectWebSocket() {
+            const chatId = document.getElementById('wsChatId').value;
+            const userId = document.getElementById('wsUserId').value;
+
+            if (!chatId || !userId) {
+                alert('Introduce Chat ID y User ID');
+                return;
+            }
+
+            const wsUrl = `ws://localhost:8080${baseUrl}/chat/${chatId}/${userId}`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                document.getElementById('wsStatus').textContent = '✅ Conectado';
+                document.getElementById('wsStatus').style.color = 'green';
+                addWSMessage('system', 'Conectado al WebSocket');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const type = data.type === 'message' ? 'received' : 'system';
+                addWSMessage(type, JSON.stringify(data, null, 2));
+            };
+
+            ws.onclose = () => {
+                document.getElementById('wsStatus').textContent = '❌ Desconectado';
+                document.getElementById('wsStatus').style.color = 'red';
+                addWSMessage('system', 'Desconectado del WebSocket');
+            };
+
+            ws.onerror = (error) => {
+                addWSMessage('system', 'Error: ' + error);
+            };
+        }
+
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function sendMessageWS() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('WebSocket no conectado');
+                return;
+            }
+
+            const message = document.getElementById('wsMessage').value;
+            if (!message) return;
+
+            ws.send(JSON.stringify({
+                type: 'message',
+                message: message
+            }));
+
+            document.getElementById('wsMessage').value = '';
+            addWSMessage('sent', 'Enviado: ' + message);
+        }
+
+        function addWSMessage(type, content) {
+            const div = document.getElementById('wsMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + type;
+            msgDiv.innerHTML = `<small>${new Date().toLocaleTimeString()}</small><br>${content.replace(/\n/g, '<br>')}`;
+            div.appendChild(msgDiv);
+            div.scrollTop = div.scrollHeight;
+        }
+
+        async function uploadFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+
+            if (files.length === 0) {
+                alert('Selecciona al menos un archivo');
+                return;
+            }
+
+            const formData = new FormData();
+            for (const file of files) {
+                formData.append('file', file);
+            }
+
+            try {
+                const result = await fetch(`${baseUrl}/api/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await result.json();
+
+                if (result.ok) {
+                    const files = JSON.parse(data.files);
+                    let html = '<div class="success"><strong>✅ Archivos subidos:</strong><br>';
+                    files.forEach(url => {
+                        html += `<a href="${url}" target="_blank">${url}</a><br>`;
+                    });
+                    html += '</div>';
+                    document.getElementById('uploadResult').innerHTML = html;
+                } else {
+                    showResult('uploadResult', data, false);
+                }
+            } catch (error) {
+                showResult('uploadResult', { error: error.message }, false);
+            }
+        }
+
+        async function createInvite() {
+            const chatId = document.getElementById('inviteChatId').value;
+            const createdBy = document.getElementById('inviteCreatedBy').value;
+            const expirationHours = document.getElementById('inviteExpiration').value;
+            const maxUses = document.getElementById('inviteMaxUses').value;
+
+            const body = { action: 'create', chatId, createdBy };
+            if (expirationHours) body.expirationHours = parseInt(expirationHours);
+            if (maxUses) body.maxUses = parseInt(maxUses);
+
+            const result = await fetch(`${baseUrl}/api/invite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const data = await result.json();
+            if (result.ok) {
+                showResult('inviteCreateResult', {
+                    ...data,
+                    fullUrl: window.location.origin + data.inviteUrl
+                }, true);
+            } else {
+                showResult('inviteCreateResult', data, false);
+            }
+        }
+
+        async function verifyInvite() {
+            const code = document.getElementById('inviteVerifyCode').value;
+            const result = await fetch(`${baseUrl}/api/invite?code=${code}`);
+            const data = await result.json();
+            showResult('inviteVerifyResult', data, result.ok);
+        }
+
+        async function joinViaInvite() {
+            const inviteCode = document.getElementById('inviteJoinCode').value;
+            const userId = document.getElementById('inviteJoinUserId').value;
+
+            const result = await fetch(`${baseUrl}/api/invite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'join', inviteCode, userId })
+            });
+
+            const data = await result.json();
+            showResult('inviteJoinResult', data, result.ok);
+        }
+
+        async function getSettings() {
+            const userId = document.getElementById('settingsGetUserId').value;
+            const result = await fetch(`${baseUrl}/api/settings?userId=${userId}`);
+            const data = await result.json();
+            showResult('settingsGetResult', data, result.ok);
+        }
+
+        async function saveSettings() {
+            const userId = document.getElementById('settingsSaveUserId').value;
+            const displayName = document.getElementById('settingsDisplayName').value;
+            const darkMode = document.getElementById('settingsDarkMode').value === 'true';
+            const status = document.getElementById('settingsStatus').value;
+
+            const result = await fetch(`${baseUrl}/api/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, displayName, darkMode, status })
+            });
+
+            const data = await result.json();
+            showResult('settingsSaveResult', data, result.ok);
+        }
+
+        function showResult(elementId, data, success) {
+            const el = document.getElementById(elementId);
+            el.className = 'result ' + (success ? 'success' : 'error');
+            el.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+
+        document.getElementById('wsMessage')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessageWS();
+        });
+    </script>
+</body>
+</html>

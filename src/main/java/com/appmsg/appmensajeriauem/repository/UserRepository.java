@@ -34,6 +34,20 @@ public class UserRepository {
         return documentToUser(doc);
     }
 
+    public User getUserById(ObjectId id) {
+        Document doc = collection.find(Filters.eq("_id", id)).first();
+        if (doc == null) return null;
+
+        return documentToUser(doc);
+    }
+
+    public User getUserByUsername(String username) {
+        Document doc = collection.find(Filters.eq("username", username)).first();
+        if (doc == null) return null;
+
+        return documentToUser(doc);
+    }
+
     public void updateUser(ObjectId id, String field, Object value) {
         collection.updateOne(
                 Filters.eq("_id", id),

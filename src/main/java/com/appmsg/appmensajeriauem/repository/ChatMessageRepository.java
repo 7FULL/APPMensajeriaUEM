@@ -2,8 +2,11 @@ package com.appmsg.appmensajeriauem.repository;
 
 import com.appmsg.appmensajeriauem.MongoDbClient;
 import com.appmsg.appmensajeriauem.model.ChatMessage;
+import com.mongodb.Block;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.sql.Timestamp;
 import java.util.*;
@@ -31,14 +34,24 @@ public class ChatMessageRepository {
         System.out.println("Chat message sent");
     }
 
-   /* public List<ChatMessage> getMessages(ObjectId chatId, int limit) {
+    // Obtener mensajes de un chat
+    public List<ChatMessage> getMessages(ObjectId chatId, int limit) {
         List<ChatMessage> chatmessage = new ArrayList<>();
         collection.find(Filters.eq("chatId", chatId))
                 .sort(new Document("timestamp", -1))
                 .limit(limit)
-                .forEach(doc -> chatmessage.add(documentToMessage(doc)));
+                .forEach((Block<? super Document>) doc -> chatmessage.add(documentToMessage(doc)));
         return chatmessage;
-    } */
+    }
+
+    // Obtener todos los mensajes de un chat (sin límite)
+    public List<ChatMessage> getAllMessages(ObjectId chatId) {
+        List<ChatMessage> chatmessage = new ArrayList<>();
+        collection.find(Filters.eq("chatId", chatId))
+                .sort(new Document("timestamp", 1))
+                .forEach((Block<? super Document>) doc -> chatmessage.add(documentToMessage(doc)));
+        return chatmessage;
+    }
 
 
     private ChatMessage documentToMessage(Document doc) {
