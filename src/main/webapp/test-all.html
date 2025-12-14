@@ -81,17 +81,16 @@
     <div class="section">
         <h2>💬 2. Chats</h2>
 
-        <h3>Crear Chat Privado</h3>
-        <label>User 1 ID:</label><input type="text" id="chatUser1"><br>
-        <label>User 2 ID:</label><input type="text" id="chatUser2"><br>
-        <button onclick="createPrivateChat()">Crear Chat Privado</button>
-        <div id="privateChatResult" class="result"></div>
+        <h3>Crear Chat</h3>
+        <label>Nombre:</label><input type="text" id="chatName" value="Chat de Prueba"><br>
+        <label>User IDs (separados por coma):</label><input type="text" id="chatUsers" placeholder="id1,id2,id3"><br>
+        <button onclick="createChat()">Crear Chat</button>
+        <div id="createChatResult" class="result"></div>
 
-        <h3>Crear Grupo</h3>
-        <label>Nombre:</label><input type="text" id="groupName" value="Grupo de Prueba"><br>
-        <label>User IDs (separados por coma):</label><input type="text" id="groupUsers" placeholder="id1,id2,id3"><br>
-        <button onclick="createGroup()">Crear Grupo</button>
-        <div id="groupResult" class="result"></div>
+        <h3>Borrar Chat</h3>
+        <label>Id:</label><input type="text" id="chatId" placeholder="id2"><br>
+        <button onclick="deleteChat()">Borrar Chat</button>
+        <div id="deleteChatResult" class="result"></div>
 
         <h3>Obtener Chat</h3>
         <label>Chat ID:</label><input type="text" id="getChatId" class="inline">
@@ -244,21 +243,37 @@
             showResult('privateChatResult', data, result.ok);
         }
 
-        async function createGroup() {
-            const groupName = document.getElementById('groupName').value;
-            const userIds = document.getElementById('groupUsers').value.split(',').map(id => id.trim());
+        async function createChat() {
+            const chatName = document.getElementById('chatName').value;
+            const chatIds = document.getElementById('chatUsers').value.split(',').map(id => id.trim());
 
             const result = await fetch(`${baseUrl}/api/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'createGroup',
-                    groupName, userIds
+                    action: 'createChat',
+                    chatName, chatIds
                 })
             });
 
             const data = await result.json();
-            showResult('groupResult', data, result.ok);
+            showResult('createChatResult', data, result.ok);
+        }
+
+        async deleteChat() {
+        const chatId = document.getElementById('chatId').value;
+
+            const result = await fetch (`${baseUrl}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                        action: 'deleteChat',
+                        chatId
+                })
+            });
+
+            const data = await result.json();
+            showResult('deleteChatResult', data, result.ok);
         }
 
         async function getChat() {
