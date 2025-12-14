@@ -57,9 +57,9 @@ public class ChatMessageRepository {
     private ChatMessage documentToMessage(Document doc) {
         // Handle multimedia array properly
         List<String> multimediaList = doc.getList("multimedia", String.class);
-        String[] multimedia = multimediaList != null
-                ? multimediaList.toArray(new String[0])
-                : new String[0];
+        List<String> multimedia = multimediaList != null
+                ? multimediaList
+                : new ArrayList<>();
 
         // Handle timestamp conversion
         java.util.Date date = doc.getDate("timestamp");

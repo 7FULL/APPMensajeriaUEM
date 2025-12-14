@@ -2,13 +2,14 @@ package com.appmsg.appmensajeriauem.model;
 
 import org.bson.types.ObjectId;
 import java.sql.Timestamp;
+import java.util.List;
 
 public class ChatMessage {
     private ObjectId _chatId;
     private ObjectId _senderId;
     private ObjectId _messageId;
     private String _message;
-    private String[] _multimedia; //Esta definición es correcta?
+    private List<String> _multimedia;
     private String _status;
     private Timestamp _timestamp;
     private Boolean _updated;
@@ -16,7 +17,7 @@ public class ChatMessage {
     public ChatMessage(){}
 
     public ChatMessage(ObjectId chatId, ObjectId senderId, ObjectId messageId, String message,
-                       String[] multimedia, String status, Timestamp timestamp, Boolean updated) {
+                       List<String> multimedia, String status, Timestamp timestamp, Boolean updated) {
         this._chatId = chatId;
         this._senderId = senderId;
         this._messageId = messageId;
@@ -30,8 +31,7 @@ public class ChatMessage {
     public ObjectId getChatId() {
         return _chatId;
     }
-
-    //Al hacer esto, no se duplica el id de chat ya creado en la clase chat?
+    
     public void setChatId(ObjectId chatId) {
         this._chatId = chatId;
     }
@@ -58,11 +58,11 @@ public class ChatMessage {
     public void setMessage(String message) {
         this._message = message;
     }
-    public String[] getMultimedia() {
+    public List<String> getMultimedia() {
         return _multimedia;
     }
 
-    public void setMultimedia(String[] multimedia) {
+    public void setMultimedia(List<String> multimedia) {
         this._multimedia = multimedia;
     }
 
