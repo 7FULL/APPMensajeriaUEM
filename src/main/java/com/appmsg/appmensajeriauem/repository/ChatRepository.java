@@ -105,9 +105,6 @@ public class ChatRepository {
         return documentToChat(doc);
     }
 
-    /**
-     * Añade un usuario a un chat existente
-     */
     public void addUserToChat(ObjectId chatId, ObjectId userId) {
         if (chatId == null || userId == null) {
             throw new IllegalArgumentException("Chat ID and User ID cannot be null");
@@ -121,9 +118,6 @@ public class ChatRepository {
         System.out.println("User " + userId + " added to chat " + chatId);
     }
 
-    /**
-     * Elimina un usuario de un chat
-     */
     public void removeUserFromChat(ObjectId chatId, ObjectId userId) {
         if (chatId == null || userId == null) {
             throw new IllegalArgumentException("Chat ID and User ID cannot be null");
