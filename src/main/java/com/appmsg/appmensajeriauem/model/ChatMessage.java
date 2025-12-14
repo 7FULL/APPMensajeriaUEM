@@ -8,7 +8,7 @@ public class ChatMessage {
     private ObjectId _senderId;
     private ObjectId _messageId;
     private String _message;
-    private String[] _multimedia; //Esta definición es correcta?
+    private String[] _multimedia;
     private String _status;
     private Timestamp _timestamp;
     private Boolean _updated;
@@ -31,7 +31,6 @@ public class ChatMessage {
         return _chatId;
     }
 
-    //Al hacer esto, no se duplica el id de chat ya creado en la clase chat?
     public void setChatId(ObjectId chatId) {
         this._chatId = chatId;
     }

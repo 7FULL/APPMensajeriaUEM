@@ -13,94 +13,125 @@ import java.util.List;
 public class ChatRepository {
     private final MongoCollection<Document> collection;
 
+    //Get chat collection from the database
     public ChatRepository(MongoDbClient mongoClient) {
         this.collection = mongoClient.getCollection("Chat");
     }
 
-    public Chat startPrivateConversation(ObjectId user1Id, ObjectId user2Id) {
-        if (user1Id == null || user2Id == null) {
-            throw new IllegalArgumentException("User IDs cannot be null");
+
+    //Create a new chat (group or private)
+    public Chat createChat(String chatName,List<ObjectId> userList, String chatImage) {
+
+        //Check that this chat does not already exist
+        //The commented lines on this method would imply that a second chat with the same name could be created if the user list is different
+        Document dok = collection.find(
+                Filters.and(
+                        Filters.eq("chatName", chatName)
+//                        Filters.all("userList", userList),
+//                        Filters.size("userList", userList.size())
+                )
+        ).first();
+
+        if (dok != null) {
+            throw new IllegalArgumentException("Class: ChatRepository, Method: createChat, Error: This chat already exists");
         }
 
-        // Verificar si ya existe un chat entre estos dos usuarios
-        Chat existingChat = findPrivateChat(user1Id, user2Id);
-        if (existingChat != null) {
-            return existingChat;
+        //Check that the chat name is not null
+        if(chatName == null || chatName.trim().isEmpty()){
+            throw new IllegalArgumentException("Class: ChatRepository, Method: createChat, Error: The chat name cannot be null or empty, it must have a name");
         }
 
-        // Crear nuevo chat privado (sin nombre, solo 2 usuarios)
-        List<ObjectId> userList = Arrays.asList(user1Id, user2Id);
-        Chat newChat = new Chat(null, null, userList, null);
+        //Check that the user list is not null
+        if(userList == null){
+            throw new IllegalArgumentException("Class: ChatRepository, Method: createChat, Error: The user list cannot be null");
+        }
+
+        //Check that there are at least 2 users in the list
+        if(userList.size() < 2){
+            throw new IllegalArgumentException("Class; ChatRepository, Method: createChat, Error: The user list must have at least 2 users");
+        }
+
+        //Check that there is no duplicate user in the list
+        if(userList.size() != userList.stream().distinct().count()){
+            throw new IllegalArgumentException("Class: ChatRepository, Method: createChat, Error: The user list cannot contain duplicate users");
+        }
+
+        //Check if it is required to assign a default chat image
+        if(chatImage == null){
+            chatImage = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
+        }
+
+        //check if the chat is a group
+        boolean isGroup = false;
+
+        if(userList.size() > 2){
+            isGroup = true;
+        }
+
+        //Create the new chat
+        Chat newChat = new Chat(null, chatName, userList, chatImage, isGroup);
 
         Document doc = new Document()
-                .append("chatName", null)
+                .append("chatName", chatName)
                 .append("userList", userList)
-                .append("chatImage", null);
+                .append("chatImage", chatImage)
+                .append("isGroup", isGroup);
 
         collection.insertOne(doc);
+
+        //Obtain the id of the new chat assigned by MongoDB
         newChat.setId(doc.getObjectId("_id"));
 
-        System.out.println("Private conversation started");
+        //Log the conversation type created
+        if(isGroup){
+            System.out.println("Log: Group conversation named " + chatName + " has been saccessfuly created");
+        } else {
+            System.out.println("Log: Private conversation named " + chatName + " has been saccessfuly created");
+        }
+
+
         return newChat;
     }
 
+    //Delete a chat by its id
+    public boolean deleteChat(ObjectId chatId) {
 
-    public Chat createGroup(String groupName, List<ObjectId> userIds, String groupImage) {
-        if (groupName == null || groupName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Group name cannot be empty");
+        //Delete the chat document by its id
+        collection.deleteOne(Filters.eq("_id", chatId));
+
+        //Search for the chat document by the chatId given. If found, it returns true, otherwise false
+        if(collection.countDocuments(Filters.eq("_id", chatId)) == 0){
+            return true;
+        } else {
+            throw new IllegalArgumentException("Class: ChatRepository, Method: deleteChat, Error: The chat was not deleted successfuly");
         }
-        if (userIds == null || userIds.size() < 2) {
-            throw new IllegalArgumentException("Group must have at least 2 users");
-        }
-
-        Chat newGroup = new Chat(null, groupName, userIds, groupImage);
-
-        Document doc = new Document()
-                .append("chatName", groupName)
-                .append("userList", userIds)
-                .append("chatImage", groupImage);
-
-        collection.insertOne(doc);
-        newGroup.setId(doc.getObjectId("_id"));
-
-        System.out.println("Group created: " + groupName);
-        return newGroup;
     }
 
-    public Chat enterConversation(ObjectId chatId) {
+
+    //Access a chat by its id
+    public Chat enterChat(ObjectId chatId) {
+
+        //Check that the chat id is not null
         if (chatId == null) {
-            throw new IllegalArgumentException("Chat ID cannot be null");
+            throw new IllegalArgumentException("Class: ChatRepository, Method: enterChat, Error: The chat id cannot be null");
         }
 
+        //Search for the chat document by the chatId given. If found, it brings the whole chat document
         Document doc = collection.find(Filters.eq("_id", chatId)).first();
-        if (doc == null) {
-            return null;
-        }
+        if (doc == null) {return null;}
 
         return documentToChat(doc);
     }
 
-    private Chat findPrivateChat(ObjectId user1Id, ObjectId user2Id) {
-        Document doc = collection.find(
-                Filters.and(
-                        Filters.eq("chatName", null),
-                        Filters.all("userList", Arrays.asList(user1Id, user2Id)),
-                        Filters.size("userList", 2)
-                )
-        ).first();
-
-        return doc != null ? documentToChat(doc) : null;
-    }
-
     public Chat getChatById(ObjectId chatId) {
+        //Check that the chat id is not null
         if (chatId == null) {
-            return null;
+            throw new IllegalArgumentException("Class: ChatRepository, Method: enterChat, Error: The chat id cannot be null");
         }
 
+        //Search for the chat document by the chatId given. If found, it brings the whole chat document
         Document doc = collection.find(Filters.eq("_id", chatId)).first();
-        if (doc == null) {
-            return null;
-        }
+        if (doc == null) {return null;}
 
         return documentToChat(doc);
     }
@@ -132,15 +163,14 @@ public class ChatRepository {
     }
 
     private Chat documentToChat(Document doc) {
-        if (doc == null) {
-            return null;
-        }
+        if (doc == null) {return null;}
 
         return new Chat(
                 doc.getObjectId("_id"),
                 doc.getString("chatName"),
                 doc.getList("userList", ObjectId.class),
-                doc.getString("chatImage")
+                doc.getString("chatImage"),
+                doc.getBoolean("isGroup")
         );
     }
 }
