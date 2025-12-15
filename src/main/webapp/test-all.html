@@ -199,7 +199,7 @@
     </div>
 
     <script>
-        const baseUrl = '/APPMensajeriaUEM_war_exploded';
+        const baseUrl = '/api';
         let ws = null;
 
         async function createUser() {
@@ -207,7 +207,7 @@
             const username = document.getElementById('userUsername').value;
             const password = document.getElementById('userPassword').value;
 
-            const result = await fetch(`${baseUrl}/api/user`, {
+            const result = await fetch(`${baseUrl}/user`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, username, password })
@@ -260,7 +260,7 @@
             showResult('createChatResult', data, result.ok);
         }
 
-        async deleteChat() {
+        async function deleteChat() {
         const chatId = document.getElementById('chatId').value;
 
             const result = await fetch (`${baseUrl}/api/chat`, {

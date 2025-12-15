@@ -74,7 +74,7 @@ public class UserServlet extends HttpServlet {
         try {
             User user = gson.fromJson(sb.toString(), User.class);
             String plainPass = user.getPassword();
-            user.setPassword(hashPassword(plainPass));
+            user.setPassword(hashPassword(plainPass.toCharArray()));
 
             if (user.getEmail() == null || user.getEmail().isEmpty()) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -87,7 +87,7 @@ public class UserServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resp.getWriter().write("{\"message\":\"Usuario creado correctamente\"}");
 
-        } catch (JsonSyntaxException e) {
+        } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\":\"JSON inválido\"}");
         }
